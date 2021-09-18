@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo
+    container_name: database
+    restart: always
+    environment: 
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks: 
+      - database
+  app_be:
+    container_name: app_be
+    build:
+      context: ./go-server
+      dockerfile: dockerfile
+    ports: 
+      - 8080:8080
+    depends_on: 
+      - database
+    environment: 
+      - DB_URI=${DB_URI}
+      - DB_NAME=${DB_NAME}
+      - DB_COLLECTION_NAME=${DB_COLLECTION_NAME}
+    networks: 
+      - database
+      - frontend
+  app_fe:
+    container_name: app_fe
+    build:
+      context: ./client
+      dockerfile: dockerfile
+    ports: 
+      - 3000:3000
+    depends_on: 
+      - app_be
+    links:
+      - app_be
+    networks: 
+      - frontend
+networks:
+  frontend:
+    name: frontend_network
+    driver: bridge
+  database:
+    name: database_network
+    driver: bridge
